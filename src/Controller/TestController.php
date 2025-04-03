@@ -10,9 +10,18 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Doctrine\ORM\EntityManagerInterface; // Ajoute  pour l'import de fichier
 
 final class TestController extends AbstractController
-{
+{   
+    private EntityManagerInterface $entityManager;
+
+    // Injecter l'EntityManager via le constructeur
+    public function __construct(EntityManagerInterface $entityManager)
+    {
+        $this->entityManager = $entityManager;
+    }
+
     #[Route('/post', name: 'app_post')]
     public function index(Request $request, PostRepository $postRepository): Response
     {
@@ -47,7 +56,7 @@ final class TestController extends AbstractController
             }
 
             // Sauvegarder le post dans la base de données
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->entityManager;
             $entityManager->persist($post);
             $entityManager->flush();
 
