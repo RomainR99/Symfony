@@ -9,14 +9,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Doctrine\ORM\EntityManagerInterface; // Ajoute  pour l'import de fichier
+use Doctrine\ORM\EntityManagerInterface;
 
 final class TestController extends AbstractController
-{   
+{
     private EntityManagerInterface $entityManager;
 
-    // Injecter l'EntityManager via le constructeur
     public function __construct(EntityManagerInterface $entityManager)
     {
         $this->entityManager = $entityManager;
@@ -28,46 +26,27 @@ final class TestController extends AbstractController
         // Créer un nouvel objet Post
         $post = new Post();
 
+        // Récupérer les fichiers d'images du dossier public/uploads/images/
+        $imageDirectory = $this->getParameter('images_directory');
+        $images = array_diff(scandir($imageDirectory), ['..', '.']); // Récupérer les fichiers du dossier, exclure . et ..
+
         // Créer et gérer le formulaire
-        $form = $this->createForm(PostType::class, $post);
+        $form = $this->createForm(PostType::class, $post, [
+            'images' => $images, // Passer la liste des images au formulaire
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Récupérer le fichier image téléchargé
-            $imageFile = $form->get('image')->getData();
-
-            if ($imageFile) {
-                try {
-                    // Créer un nom de fichier unique
-                    $newFilename = uniqid() . '.' . $imageFile->guessExtension();
-
-                    // Déplacer l'image dans le dossier public/uploads/images/
-                    $imageFile->move(
-                        $this->getParameter('images_directory'), // Répertoire où l'image sera stockée
-                        $newFilename
-                    );
-
-                    // Enregistrer le nom de fichier dans l'entité
-                    $post->setImageFilename($newFilename);
-                } catch (FileException $e) {
-                    // Gestion des erreurs de téléchargement
-                    $this->addFlash('error', 'Une erreur est survenue lors du téléchargement de l\'image.');
-                }
-            }
-
             // Sauvegarder le post dans la base de données
-            $entityManager = $this->entityManager;
-            $entityManager->persist($post);
-            $entityManager->flush();
+            $this->entityManager->persist($post);
+            $this->entityManager->flush();
 
-            // Rediriger vers la page de la liste des posts ou vers la page de succès
             return $this->redirectToRoute('app_post');
         }
 
-        // Afficher le formulaire et les posts de l'utilisateur (si nécessaire)
         return $this->render('test/index.html.twig', [
             'form' => $form->createView(),
-            'posts' => $postRepository->findByUser($this->getUser()), // Trouver les posts de l'utilisateur connecté
+            'posts' => $postRepository->findAll(), // Afficher tous les posts
         ]);
     }
 }
