@@ -1,32 +1,36 @@
+{# templates/test/index.html.twig #}
+
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello TestController!{% endblock %}
+{% block title %}Créer un Post{% endblock %}
 
-{% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+{% block content %}
+    <h1>Créer un Post</h1>
 
-<div class="example-wrapper">
-    
-
-    <h2>Ajouter un nouveau post avec une image</h2>
+    {# Formulaire de création du post #}
     {{ form_start(form) }}
-        {{ form_row(form.image) }}
-        <button class="btn">Envoyer</button>
+        {{ form_row(form.title) }}
+        {{ form_row(form.description) }}
+        {{ form_row(form.imageFilename) }}  {# Afficher le champ pour sélectionner l'image #}
+        <button type="submit">Envoyer</button>
     {{ form_end(form) }}
 
-    <h2>Vos posts :</h2>
-    {% for post in posts %}
-        <div>
-            <p><strong>Post créé le :</strong> {{ post.createdAt|date('Y-m-d H:i:s') }}</p>
-            <p><strong>Votre image :</strong></p>
-            <img src="{{ asset('uploads/images/' ~ post.imageFilename) }}" alt="Image de {{ post.id }}" width="200">
-        </div>
+    {# Affichage de tous les posts existants #}
+    <h2>Liste des posts</h2>
+    {% if posts is not empty %}
+        <ul>
+            {% for post in posts %}
+                <li>
+                    <h3>{{ post.title }}</h3>
+                    <p>{{ post.description }}</p>
+                    {% if post.imageFilename %}
+                        <img src="{{ asset('uploads/images/' ~ post.imageFilename) }}" alt="Image">
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
     {% else %}
         <p>Aucun post trouvé.</p>
-    {% endfor %}
-</div>
-
+    {% endif %}
 {% endblock %}
+
